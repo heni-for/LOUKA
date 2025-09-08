@@ -8,6 +8,9 @@ from .config import OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYME
 
 
 def _client() -> OpenAI:
+	if not OPENAI_API_KEY:
+		raise ValueError("OpenAI API key not found. Please set OPENAI_API_KEY in your .env file or environment variables.")
+	
 	if AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_DEPLOYMENT:
 		return OpenAI(
 			api_key=OPENAI_API_KEY,
