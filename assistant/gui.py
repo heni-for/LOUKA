@@ -290,16 +290,29 @@ class LucaGUI:
     def process_command(self, command: str):
         """Process a voice or text command."""
         try:
-            # Use the existing parse_command function
-            parse_command(command)
+            # Import the AI chat function
+            from .llm import chat_with_ai
             
-            # For now, just echo back what was heard
-            # In a real implementation, you'd get the AI response
-            response = f"I heard: '{command}'. This would be processed by the AI."
+            # Process the command with AI
+            response = chat_with_ai(command, self.conversation_history)
+            
+            # Add AI response to conversation
             self.add_message("assistant", response)
             
+            # Update conversation history
+            self.conversation_history.append({"role": "user", "content": command})
+            self.conversation_history.append({"role": "assistant", "content": response})
+            
+            # Keep only last 10 exchanges to manage memory
+            if len(self.conversation_history) > 20:
+                self.conversation_history = self.conversation_history[-20:]
+            
         except Exception as e:
-            self.add_message("error", f"Error processing command: {str(e)}")
+            error_msg = str(e)
+            if "API key not found" in error_msg:
+                self.add_message("error", "OpenAI API key not found. Please add your API key to use AI chat features.")
+            else:
+                self.add_message("error", f"Error processing command: {error_msg}")
     
     def send_command(self, command: str):
         """Send a quick command."""
