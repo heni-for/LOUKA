@@ -43,6 +43,46 @@ def _frame_bytes(num_ms: int = FRAME_MS) -> int:
 	return int(SAMPLE_RATE * (num_ms / 1000.0)) * BYTES_PER_SAMPLE * CHANNELS
 
 
+def find_best_microphone() -> int | None:
+	"""Automatically detect and return the best available microphone device index."""
+	try:
+		devices = sd.query_devices()
+		input_devices = []
+		
+		for i, device in enumerate(devices):
+			# Check if device has input channels
+			if device.get('max_input_channels', 0) > 0:
+				device_info = {
+					'index': i,
+					'name': device.get('name', f'Device {i}'),
+					'channels': device.get('max_input_channels', 0),
+					'is_default': device.get('is_default', False),
+					'hostapi': device.get('hostapi', 0)
+				}
+				input_devices.append(device_info)
+		
+		if not input_devices:
+			print("No input devices found!")
+			return None
+		
+		# Sort by priority: default first, then by channel count, then by hostapi
+		input_devices.sort(key=lambda x: (
+			not x['is_default'],  # Default devices first
+			-x['channels'],       # More channels first
+			x['hostapi']          # Lower hostapi first (usually system audio)
+		))
+		
+		best_device = input_devices[0]
+		print(f"Auto-selected microphone: {best_device['name']} (Device {best_device['index']})")
+		print(f"  Channels: {best_device['channels']}, Default: {best_device['is_default']}")
+		
+		return best_device['index']
+		
+	except Exception as e:
+		print(f"Error detecting microphones: {e}")
+		return None
+
+
 class SpeechRecognizer:
 	def __init__(self, model_path: str, input_device: int | None = None) -> None:
 		self.model = Model(model_path)
@@ -285,6 +325,8 @@ def main():
 	global rec
 	model_path = VOSK_MODEL_PATH
 	mic_index = None
+	
+	# Parse command line arguments
 	if len(sys.argv) >= 2:
 		try:
 			mic_index = int(sys.argv[1])
@@ -293,11 +335,18 @@ def main():
 	if len(sys.argv) >= 3:
 		model_path = sys.argv[2]
 	
+	# Auto-detect best microphone if not specified
+	if mic_index is None:
+		print("Auto-detecting best microphone...")
+		mic_index = find_best_microphone()
+		if mic_index is None:
+			print("No suitable microphone found. Please check your audio devices.")
+			return
+	
 	# Initialize voice recognition
 	try:
 		rec = SpeechRecognizer(model_path, mic_index)
-		if mic_index is not None:
-			print(f"Using microphone device index: {mic_index}")
+		print(f"Using microphone device index: {mic_index}")
 	except Exception as e:
 		print("Voice setup error:", e)
 		print("If it's a model error, set VOSK_MODEL_PATH in .env or pass the model path.")

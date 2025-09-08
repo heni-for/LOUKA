@@ -10,7 +10,7 @@ import queue
 import time
 from typing import Optional
 
-from .voice import SpeechRecognizer, say, parse_command
+from .voice import SpeechRecognizer, say, parse_command, find_best_microphone
 from .config import VOSK_MODEL_PATH
 
 
@@ -207,9 +207,14 @@ class LucaGUI:
     def setup_voice_recognition(self):
         """Initialize voice recognition."""
         try:
-            self.rec = SpeechRecognizer(VOSK_MODEL_PATH, 1)  # Use microphone index 1
+            # Auto-detect best microphone
+            mic_index = find_best_microphone()
+            if mic_index is None:
+                raise Exception("No suitable microphone found")
+            
+            self.rec = SpeechRecognizer(VOSK_MODEL_PATH, mic_index)
             self.rec.start()
-            self.mic_status_label.config(text="🎤 Microphone: Ready", fg='#27ae60')
+            self.mic_status_label.config(text=f"🎤 Microphone: Ready (Device {mic_index})", fg='#27ae60')
         except Exception as e:
             self.mic_status_label.config(text=f"🎤 Microphone: Error - {str(e)}", fg='#e74c3c')
             messagebox.showerror("Microphone Error", f"Could not initialize microphone:\n{str(e)}")
