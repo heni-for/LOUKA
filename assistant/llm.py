@@ -58,3 +58,36 @@ def draft_email(user_prompt: str) -> str:
 		],
 	)
 	return resp.choices[0].message.content.strip()
+
+
+def chat_with_ai(user_message: str, conversation_history: list = None) -> str:
+	"""General AI chat function for any conversation."""
+	client = _client()
+	
+	# Default system message for Luca
+	system_message = {
+		"role": "system", 
+		"content": """You are Luca, a helpful AI voice assistant. You can help with:
+		- Email management (inbox, organize, read, draft)
+		- General questions and conversations
+		- Information and explanations
+		- Task planning and reminders
+		- Creative writing and brainstorming
+		
+		Keep responses conversational and helpful. If asked about email commands, mention: inbox, organize, read, draft."""
+	}
+	
+	# Build conversation history
+	messages = [system_message]
+	if conversation_history:
+		messages.extend(conversation_history)
+	
+	messages.append({"role": "user", "content": user_message})
+	
+	resp = client.chat.completions.create(
+		model=DEFAULT_MODEL,
+		messages=messages,
+		max_tokens=500,  # Keep responses concise for voice
+		temperature=0.7
+	)
+	return resp.choices[0].message.content.strip()

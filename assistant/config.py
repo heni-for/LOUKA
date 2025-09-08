@@ -22,3 +22,6 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
 AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT", "")
 DEFAULT_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
+
+# Speech recognition configuration
+VOSK_MODEL_PATH = os.getenv("VOSK_MODEL_PATH", "vosk-model-small-en-us-0.15")
