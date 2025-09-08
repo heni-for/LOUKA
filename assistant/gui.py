@@ -11,6 +11,7 @@ import time
 from typing import Optional
 
 from .voice import SpeechRecognizer, say, parse_command, find_best_microphone
+from .tts import speak
 from .config import VOSK_MODEL_PATH
 
 
@@ -232,6 +233,11 @@ class LucaGUI:
             self.conversation_text.insert('end', f"You: {message}\n", "user")
         elif sender == "assistant":
             self.conversation_text.insert('end', f"Luca: {message}\n", "assistant")
+            # Add voice output for assistant messages
+            try:
+                speak(message)
+            except Exception as e:
+                print(f"TTS Error: {e}")
         elif sender == "system":
             self.conversation_text.insert('end', f"{message}\n", "system")
         elif sender == "error":
