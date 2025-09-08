@@ -290,29 +290,56 @@ class LucaGUI:
     def process_command(self, command: str):
         """Process a voice or text command."""
         try:
-            # Import the AI chat function
-            from .llm import chat_with_ai
+            # Check if it's an email command first
+            if command.lower().strip() in ["inbox", "organize", "organise", "read", "draft", "help"]:
+                self.handle_email_command(command.lower().strip())
+                return
             
-            # Process the command with AI
-            response = chat_with_ai(command, self.conversation_history)
-            
-            # Add AI response to conversation
-            self.add_message("assistant", response)
-            
-            # Update conversation history
-            self.conversation_history.append({"role": "user", "content": command})
-            self.conversation_history.append({"role": "assistant", "content": response})
-            
-            # Keep only last 10 exchanges to manage memory
-            if len(self.conversation_history) > 20:
-                self.conversation_history = self.conversation_history[-20:]
+            # Try AI chat for other commands
+            try:
+                from .llm import chat_with_ai
+                response = chat_with_ai(command, self.conversation_history)
+                self.add_message("assistant", response)
+                
+                # Update conversation history
+                self.conversation_history.append({"role": "user", "content": command})
+                self.conversation_history.append({"role": "assistant", "content": response})
+                
+                # Keep only last 10 exchanges to manage memory
+                if len(self.conversation_history) > 20:
+                    self.conversation_history = self.conversation_history[-20:]
+                    
+            except Exception as ai_error:
+                error_msg = str(ai_error)
+                if "API key not found" in error_msg or "quota" in error_msg.lower() or "proxies" in error_msg.lower():
+                    self.add_message("error", "OpenAI API key issue. Please check your API key or billing. Email commands still work!")
+                else:
+                    self.add_message("error", f"AI Error: {error_msg}")
             
         except Exception as e:
-            error_msg = str(e)
-            if "API key not found" in error_msg:
-                self.add_message("error", "OpenAI API key not found. Please add your API key to use AI chat features.")
-            else:
-                self.add_message("error", f"Error processing command: {error_msg}")
+            self.add_message("error", f"Error processing command: {str(e)}")
+    
+    def handle_email_command(self, command: str):
+        """Handle email-specific commands."""
+        try:
+            if command == "inbox":
+                self.add_message("assistant", "Checking your inbox...")
+                # Here you would call the actual inbox function
+                self.add_message("assistant", "Inbox command received. (Email integration needs Outlook setup)")
+            elif command in ["organize", "organise"]:
+                self.add_message("assistant", "Organizing your emails...")
+                self.add_message("assistant", "Organize command received. (Email integration needs Outlook setup)")
+            elif command == "read":
+                self.add_message("assistant", "Reading emails...")
+                self.add_message("assistant", "Read command received. (Email integration needs Outlook setup)")
+            elif command == "draft":
+                self.add_message("assistant", "Drafting email...")
+                self.add_message("assistant", "Draft command received. (Email integration needs Outlook setup)")
+            elif command == "help":
+                self.add_message("assistant", "Available commands: inbox, organize, read, draft, help")
+                self.add_message("assistant", "Voice commands work! AI chat needs valid API key.")
+        except Exception as e:
+            self.add_message("error", f"Email command error: {str(e)}")
     
     def send_command(self, command: str):
         """Send a quick command."""
