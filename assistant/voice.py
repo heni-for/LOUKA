@@ -132,7 +132,9 @@ class SpeechRecognizer:
 		if len(data) >= _frame_bytes():
 			import numpy as np
 			audio_data = np.frombuffer(data, dtype=np.int16)
-			audio_level = np.sqrt(np.mean(audio_data**2)) / 32768.0  # Normalize to 0-1
+			# Calculate audio level with safety check for empty arrays
+			mean_squared = np.mean(audio_data**2)
+			audio_level = np.sqrt(mean_squared) / 32768.0 if mean_squared > 0 else 0.0
 			
 			# Only process audio that's clearly above background noise
 			if audio_level < 0.01:  # Higher threshold to filter out background noise
@@ -176,7 +178,9 @@ class SpeechRecognizer:
 				# Check if this looks like actual speech
 				import numpy as np
 				audio_data = np.frombuffer(data, dtype=np.int16)
-				audio_level = np.sqrt(np.mean(audio_data**2)) / 32768.0
+				# Calculate audio level with safety check
+				mean_squared = np.mean(audio_data**2)
+				audio_level = np.sqrt(mean_squared) / 32768.0 if mean_squared > 0 else 0.0
 				audio_variation = np.std(audio_data) / 32768.0
 				
 				if audio_level > 0.02 and audio_variation > 0.01:  # Clear speech indicators

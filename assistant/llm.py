@@ -17,6 +17,8 @@ def _client() -> OpenAI:
 			base_url=f"{AZURE_OPENAI_ENDPOINT}/openai/deployments/{AZURE_OPENAI_DEPLOYMENT}",
 			azure=True,
 		)
+	
+	# Use the standard OpenAI client
 	return OpenAI(api_key=OPENAI_API_KEY)
 
 
