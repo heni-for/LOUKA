@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual env
+.venv/
+venv/
+
+# Editor/OS
+.DS_Store
+Thumbs.db
+
+# Local config/secrets
+.env
+assistant/.token_cache.bin
+
+# Models and archives
+vosk-model-*/
+*.zip
+
+# Build/packaging
+build/
+dist/
+*.egg-info/
