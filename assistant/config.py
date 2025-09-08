@@ -18,10 +18,14 @@ MS_SCOPES = [
     "profile",
 ]
 
+# Gemini AI Configuration
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+DEFAULT_MODEL = os.getenv("LLM_MODEL", "gemini-1.5-flash")
+
+# Legacy OpenAI support (optional)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
 AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT", "")
-DEFAULT_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 
 # Speech recognition configuration
 VOSK_MODEL_PATH = os.getenv("VOSK_MODEL_PATH", "vosk-model-small-en-us-0.15")

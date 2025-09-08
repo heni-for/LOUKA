@@ -1,106 +1,185 @@
-# Outlook AI Assistant (Windows)
+# Luca - AI Voice Assistant with Gemini
 
-A simple Siri-like assistant to organize your Outlook email with Microsoft Graph, read messages aloud, and generate example email drafts with an LLM.
+A powerful Siri-like voice assistant that helps you manage emails, have conversations, and get things done using Google's Gemini AI models.
 
-## Features
-- Login via Microsoft account (Device Code Flow)
-- List and read your inbox emails
-- Summarize and categorize emails with AI
-- Move emails to folders (e.g., Archive, Important)
-- Text-to-Speech to read an email aloud (Windows SAPI5)
-- Draft example emails and replies via LLM
-- Voice assistant with wake word ("hey luca") for hands-free control
+## ✨ Features
 
-## Prerequisites
-- Windows 10/11 with Python 3.10+
-- A Microsoft account with Outlook/Exchange Online
-- Azure App Registration (to access Microsoft Graph)
-- Optional: OpenAI API key (or Azure OpenAI) for drafting/summarization
+- **🎤 Voice Control**: Push-to-talk voice recognition with automatic microphone detection
+- **🔊 Voice Output**: Speaks responses aloud using Windows TTS
+- **📧 Email Management**: Inbox, organize, read, and draft emails (Outlook integration)
+- **🤖 AI Chat**: General conversations powered by Google Gemini
+- **🖥️ Modern GUI**: Beautiful desktop interface with conversation history
+- **⚡ Offline Speech**: Uses Vosk for local speech recognition (no internet required)
+- **🔧 Auto-Setup**: Automatically detects the best microphone and configures everything
 
-## Quick Start
+## 🚀 Quick Start
 
-1) Create and activate a virtual environment (recommended)
+### 1. Install Dependencies
 
 ```powershell
+# Navigate to project directory
 cd C:\Users\Heni2\luca
-py -3.11 -m venv .venv
-. .venv\Scripts\Activate.ps1
-```
 
-2) Install dependencies
+# Create virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-```powershell
+# Install all dependencies
 pip install -r requirements.txt
 ```
 
-3) Register an Azure AD app
-- Go to Azure Portal → App registrations → New registration
-- Name: Outlook AIAssistant (any name)
-- Supported account types: Accounts in any organizational directory and personal Microsoft accounts
-- Redirect URI: Public client/native (mobile & desktop) → `http://localhost`
-- After creating, copy the Application (client) ID
-- API Permissions → Add a permission → Microsoft Graph → Delegated
-  - Mail.Read
-  - Mail.ReadWrite
-  - offline_access
-  - openid, profile (usually included)
-- Click Grant admin consent if available (for work/school); for personal accounts, consent at login
+### 2. Get Your Gemini API Key
 
-4) Configure environment
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the generated key
 
-Create a `.env` file in the project root:
+### 3. Configure API Key
 
-```env
-MS_CLIENT_ID=your_client_id_here
-MS_TENANT_ID=common
-MS_AUTH_MODE=device
-# Optional LLM provider (OpenAI or Azure OpenAI)
-OPENAI_API_KEY=sk-...
-# If using Azure OpenAI instead of OpenAI:
-# AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-# AZURE_OPENAI_DEPLOYMENT=gpt-4o-mini
-```
-
-5) Local Outlook mode (no Azure)
-- You can use the assistant with the Outlook desktop app without Graph.
-- Commands add a `mode` parameter where applicable, defaulting to `local`.
-
-6) Run examples
-
+**Option A: Use the setup script (Recommended)**
 ```powershell
-# List inbox (local Outlook mode)
-python -m assistant.cli inbox
-# Read a message by EntryID
-python -m assistant.cli read <EntryID>
-# Organize (dry-run)
-python -m assistant.cli organize
-# Draft with AI and open in Outlook
-python -m assistant.cli draft "Ask for a project update for client ABC"
+python setup_gemini_key.py
 ```
 
-## Voice Assistant (wake word: "hey luca")
+**Option B: Manual setup**
+Create a `.env` file in the project root:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+VOSK_MODEL_PATH=vosk-model-small-en-us-0.15
+```
 
-1) Download a Vosk model (offline speech-to-text):
-- `vosk-model-small-en-us-0.15` from `https://alphacephei.com/vosk/models`
-- Unzip the folder into the project root so the path is `vosk-model-small-en-us-0.15`
+### 4. Download Speech Model (One-time setup)
 
-2) Start the voice assistant
+Download the Vosk speech recognition model:
+- Go to [Vosk Models](https://alphacephei.com/vosk/models)
+- Download `vosk-model-small-en-us-0.15.zip`
+- Extract to project root so you have: `vosk-model-small-en-us-0.15/`
+
+### 5. Launch Luca
+
+**GUI Mode (Recommended):**
+```powershell
+python run_luca_gui.py
+```
+
+**Voice-Only Mode:**
 ```powershell
 python -m assistant.voice
 ```
-- Say: "hey luca" then commands like:
-  - "inbox"
-  - "read <EntryID>"
-  - "organize"
-  - "draft follow up with client about timeline"
 
-## Notes
-- Tokens are cached locally in `assistant/.token_cache.bin`.
-- The assistant uses device-code flow by default so there is no secret stored.
-- TTS uses `pyttsx3` with SAPI5 voices available on Windows.
+## 🎯 How to Use
 
-## Uninstall / Clean up
+### Voice Commands
+- **Press Enter** to start listening
+- **Say "help"** to see available commands
+- **Email commands**: "inbox", "organize", "read", "draft"
+- **General chat**: Ask questions, get help, brainstorm ideas
+
+### GUI Features
+- **Voice Input**: Click microphone button or press Enter
+- **Text Input**: Type messages in the text box
+- **Conversation History**: See all interactions
+- **Voice Output**: Luca speaks all responses aloud
+
+## 🔧 Configuration
+
+### Environment Variables (.env file)
+```env
+# Required
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Optional
+VOSK_MODEL_PATH=vosk-model-small-en-us-0.15
+LLM_MODEL=gemini-1.5-flash
+
+# Legacy OpenAI support (optional)
+OPENAI_API_KEY=sk-...
+```
+
+### Available Models
+- `gemini-1.5-flash` (default) - Fast and efficient
+- `gemini-1.5-pro` - More capable for complex tasks
+- `gemini-1.0-pro` - Stable and reliable
+
+## 🛠️ Troubleshooting
+
+### Voice Recognition Issues
 ```powershell
+# Test microphone detection
+python -c "from assistant.voice import find_best_microphone; print(find_best_microphone())"
+
+# Test speech recognition
+python test_speech.py
+```
+
+### API Key Issues
+```powershell
+# Test Gemini integration
+python test_gemini.py
+
+# Test voice output
+python test_voice.py
+```
+
+### Common Solutions
+- **No microphone detected**: Check Windows audio settings
+- **Poor voice recognition**: Speak clearly, reduce background noise
+- **API errors**: Verify your Gemini API key is correct
+- **Installation issues**: Try `pip install --upgrade pip` first
+
+## 📁 Project Structure
+
+```
+luca/
+├── assistant/
+│   ├── __init__.py
+│   ├── config.py          # Configuration management
+│   ├── llm.py             # Gemini AI integration
+│   ├── tts.py             # Text-to-speech
+│   ├── voice.py           # Voice recognition
+│   ├── gui.py             # Desktop interface
+│   └── outlook_local.py   # Email integration
+├── run_luca_gui.py        # GUI launcher
+├── setup_gemini_key.py    # API key setup
+├── test_gemini.py         # Gemini testing
+├── test_voice.py          # Voice testing
+├── requirements.txt       # Dependencies
+└── README.md             # This file
+```
+
+## 🎉 What's New
+
+- **✅ Migrated to Google Gemini**: More powerful and cost-effective AI
+- **✅ Automatic Microphone Detection**: No manual setup required
+- **✅ Voice Output Integration**: Luca speaks all responses
+- **✅ Modern GUI**: Beautiful desktop interface
+- **✅ Push-to-Talk**: Only listens when you want it to
+- **✅ Error Handling**: Graceful handling of API issues
+
+## 🔄 Migration from OpenAI
+
+If you were using OpenAI before:
+1. Get a Gemini API key (free tier available)
+2. Run `python setup_gemini_key.py`
+3. Your existing voice commands will work with Gemini!
+
+## 📞 Support
+
+- **Voice Issues**: Check microphone permissions in Windows
+- **API Issues**: Verify your Gemini API key
+- **Installation**: Ensure Python 3.10+ and virtual environment
+
+## 🗑️ Clean Up
+
+```powershell
+# Remove virtual environment
 Remove-Item .venv -Recurse -Force
+
+# Remove cached files
 Remove-Item assistant\.token_cache.bin -Force -ErrorAction SilentlyContinue
 ```
+
+---
+
+**Luca** - Your AI Voice Assistant powered by Google Gemini! 🎤🤖✨

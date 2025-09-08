@@ -318,7 +318,7 @@ class LucaGUI:
             except Exception as ai_error:
                 error_msg = str(ai_error)
                 if "API key not found" in error_msg or "quota" in error_msg.lower() or "proxies" in error_msg.lower():
-                    self.add_message("error", "OpenAI API key issue. Please check your API key or billing. Email commands still work!")
+                    self.add_message("error", "Gemini API key issue. Please check your API key or billing. Email commands still work!")
                 else:
                     self.add_message("error", f"AI Error: {error_msg}")
             
@@ -343,7 +343,7 @@ class LucaGUI:
                 self.add_message("assistant", "Draft command received. (Email integration needs Outlook setup)")
             elif command == "help":
                 self.add_message("assistant", "Available commands: inbox, organize, read, draft, help")
-                self.add_message("assistant", "Voice commands work! AI chat needs valid API key.")
+                self.add_message("assistant", "Voice commands work! AI chat needs valid Gemini API key.")
         except Exception as e:
             self.add_message("error", f"Email command error: {str(e)}")
     
