@@ -13,6 +13,9 @@ from typing import Optional
 from .voice import SpeechRecognizer, say, parse_command, find_best_microphone
 from .tts import speak
 from .config import VOSK_MODEL_PATH
+from .email_integration import EmailIntegration
+from .multilang_voice import MultiLanguageVoiceRecognizer
+from .language_switcher import LanguageSwitcher
 
 
 class LucaGUI:
@@ -30,8 +33,104 @@ class LucaGUI:
         # Conversation history
         self.conversation_history = []
         
+        # Email integration
+        self.email_integration = EmailIntegration()
+        
+        # Initialize multi-language voice recognizer
+        self.voice_recognizer = MultiLanguageVoiceRecognizer()
+        
+        # Push-to-talk settings
+        self.ptt_active = False
+        self.ptt_key = 'l'  # Press 'L' for push-to-talk
+        
         self.setup_ui()
         self.setup_voice_recognition()
+        self.setup_push_to_talk()
+    
+    def setup_push_to_talk(self):
+        """Setup push-to-talk functionality."""
+        # Bind key events
+        self.root.bind('<KeyPress-l>', self.on_ptt_press)
+        self.root.bind('<KeyRelease-l>', self.on_ptt_release)
+        self.root.focus_set()  # Make sure the window can receive key events
+        
+        # Add PTT status label
+        self.ptt_status_label = tk.Label(
+            self.root,
+            text="🎤 Press and hold 'L' to talk",
+            font=('Arial', 10),
+            fg='#95a5a6',
+            bg='#2c3e50'
+        )
+        self.ptt_status_label.pack(pady=5)
+    
+    def on_ptt_press(self, event):
+        """Handle push-to-talk key press."""
+        if not self.ptt_active:
+            self.ptt_active = True
+            self.ptt_status_label.config(text="🎤 Listening... (Hold 'L')", fg='#e74c3c')
+            self.start_ptt_listening()
+    
+    def on_ptt_release(self, event):
+        """Handle push-to-talk key release."""
+        if self.ptt_active:
+            self.ptt_active = False
+            self.ptt_status_label.config(text="🎤 Press and hold 'L' to talk", fg='#95a5a6')
+            self.stop_ptt_listening()
+    
+    def start_ptt_listening(self):
+        """Start listening for voice command."""
+        def listen_thread():
+            try:
+                # Get current language
+                current_lang = self.language_switcher.get_current_language()
+                self.voice_recognizer.set_language(current_lang)
+                
+                # Update status to show listening
+                self.root.after(0, lambda: self.ptt_status_label.config(
+                    text="🎤 Listening... Speak now!", fg='#e74c3c'
+                ))
+                
+                # Listen for command
+                command = self.voice_recognizer.listen_for_command(timeout=5.0)
+                if command:
+                    # Process the command
+                    self.root.after(0, lambda: self.process_ptt_command(command))
+                else:
+                    self.root.after(0, lambda: self.ptt_status_label.config(
+                        text="🎤 No command heard. Press 'L' to try again", fg='#f39c12'
+                    ))
+            except Exception as e:
+                self.root.after(0, lambda: self.ptt_status_label.config(
+                    text=f"❌ Error: {str(e)}", fg='#e74c3c'
+                ))
+        
+        # Start listening in a separate thread
+        threading.Thread(target=listen_thread, daemon=True).start()
+    
+    def stop_ptt_listening(self):
+        """Stop listening for voice command."""
+        self.voice_recognizer.stop_listening()
+    
+    def process_ptt_command(self, command: str):
+        """Process voice command from push-to-talk."""
+        # Add user message with what was heard
+        self.add_message("user", f"🎤 Heard: '{command}'")
+        
+        # Check for "read my last email" command
+        if any(phrase in command.lower() for phrase in [
+            "read my last email", "read last email", "last email", "recent email",
+            "اقرأ آخر بريد", "آخر بريد إلكتروني", "قراءة آخر بريد"
+        ]):
+            self.add_message("assistant", "قراءة آخر بريد إلكتروني...")
+            last_email_result = self.email_integration.read_last_email()
+            self.add_message("assistant", last_email_result)
+        else:
+            # Process other commands
+            self.process_command(command)
+        
+        # Reset PTT status
+        self.ptt_status_label.config(text="🎤 Press and hold 'L' to talk", fg='#95a5a6')
         
     def setup_ui(self):
         """Create the user interface."""
@@ -115,6 +214,10 @@ class LucaGUI:
         # Control buttons frame
         control_frame = tk.Frame(self.root, bg='#2c3e50')
         control_frame.pack(fill='x', padx=20, pady=10)
+        
+        # Language switcher
+        self.language_switcher = LanguageSwitcher(control_frame, self.voice_recognizer)
+        self.language_switcher.pack(fill='x', pady=5)
         
         # Voice control buttons
         self.listen_button = tk.Button(
@@ -301,6 +404,38 @@ class LucaGUI:
                 self.handle_email_command(command.lower().strip())
                 return
             
+            # Check for specific email reading commands
+            # Check for Arabic email commands
+            arabic_commands = [
+                "آخر بريد إلكتروني", "قراءة آخر بريد", "آخر رسالة", "بريد إلكتروني",
+                "read my last email", "read last email", "last email", "recent email"
+            ]
+            
+            if any(phrase in command.lower() for phrase in arabic_commands) or any(phrase in command for phrase in ["آخر بريد", "قراءة آخر"]):
+                self.add_message("assistant", "قراءة آخر بريد إلكتروني...")
+                last_email_result = self.email_integration.read_last_email()
+                self.add_message("assistant", last_email_result)
+                return
+            
+            # Check if it's a draft request
+            if "draft" in command.lower() and len(command.split()) > 1:
+                self.add_message("assistant", "Drafting your email...")
+                draft_result = self.email_integration.draft_email(command)
+                self.add_message("assistant", draft_result)
+                return
+            
+            # Check if it's an email summary request
+            if "summarize" in command.lower() and "email" in command.lower():
+                self.add_message("assistant", "I can help summarize emails! Please paste the email content here and I'll analyze it for you.")
+                return
+            
+            # Check if user pasted email content (long text with email-like content)
+            if len(command) > 100 and any(keyword in command.lower() for keyword in ["subject:", "from:", "to:", "sent:", "received:"]):
+                self.add_message("assistant", "I see you've pasted email content! Let me summarize it for you...")
+                summary_result = self.email_integration.summarize_email_content(command)
+                self.add_message("assistant", summary_result)
+                return
+            
             # Try AI chat for other commands
             try:
                 from .llm import chat_with_ai
@@ -330,20 +465,23 @@ class LucaGUI:
         try:
             if command == "inbox":
                 self.add_message("assistant", "Checking your inbox...")
-                # Here you would call the actual inbox function
-                self.add_message("assistant", "Inbox command received. (Email integration needs Outlook setup)")
+                inbox_summary = self.email_integration.get_inbox_summary()
+                self.add_message("assistant", inbox_summary)
             elif command in ["organize", "organise"]:
                 self.add_message("assistant", "Organizing your emails...")
-                self.add_message("assistant", "Organize command received. (Email integration needs Outlook setup)")
+                organize_result = self.email_integration.organize_emails()
+                self.add_message("assistant", organize_result)
             elif command == "read":
                 self.add_message("assistant", "Reading emails...")
-                self.add_message("assistant", "Read command received. (Email integration needs Outlook setup)")
+                read_result = self.email_integration.read_email()
+                self.add_message("assistant", read_result)
             elif command == "draft":
-                self.add_message("assistant", "Drafting email...")
-                self.add_message("assistant", "Draft command received. (Email integration needs Outlook setup)")
+                self.add_message("assistant", "What would you like to draft? Please provide details...")
+                # For now, we'll ask for more details in the next message
             elif command == "help":
                 self.add_message("assistant", "Available commands: inbox, organize, read, draft, help")
-                self.add_message("assistant", "Voice commands work! AI chat needs valid Gemini API key.")
+                status = self.email_integration.get_status()
+                self.add_message("assistant", status)
         except Exception as e:
             self.add_message("error", f"Email command error: {str(e)}")
     

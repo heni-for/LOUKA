@@ -28,4 +28,6 @@ AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
 AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT", "")
 
 # Speech recognition configuration
-VOSK_MODEL_PATH = os.getenv("VOSK_MODEL_PATH", "vosk-model-small-en-us-0.15")
+VOSK_MODEL_PATH = os.getenv("VOSK_MODEL_PATH", "vosk-model-en-us-0.22")
+ARABIC_MODEL_PATH = os.getenv("ARABIC_MODEL_PATH", "vosk-model-ar-tn-0.1-linto")
+TUNISIAN_MODEL_PATH = os.getenv("TUNISIAN_MODEL_PATH", "vosk-model-ar-tn-0.1-linto")
