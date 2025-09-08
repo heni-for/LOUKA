@@ -278,11 +278,12 @@ class LucaGUI:
                 utterance = self.rec.listen_text(mode="free")
                 if utterance and len(utterance.strip()) > 1:
                     # Process the voice input
-                    self.root.after(0, lambda: self.add_message("user", utterance))
-                    self.root.after(0, lambda: self.process_command(utterance))
+                    self.root.after(0, lambda u=utterance: self.add_message("user", u))
+                    self.root.after(0, lambda u=utterance: self.process_command(u))
                     break  # Stop listening after getting input
         except Exception as e:
-            self.root.after(0, lambda: self.add_message("error", str(e)))
+            error_msg = str(e)
+            self.root.after(0, lambda: self.add_message("error", error_msg))
         finally:
             self.root.after(0, self.stop_listening)
     
