@@ -65,18 +65,35 @@ def draft_email(user_prompt: str) -> str:
 
 
 def chat_with_ai(user_message: str, conversation_history: list = None) -> str:
-    """General AI chat function using Gemini."""
+    """General AI chat function using Gemini with Siri-like personality."""
     model = _configure_gemini()
     
-    # Build conversation context
-    system_prompt = """You are Luca, a helpful AI voice assistant. You can help with:
-    - Email management (inbox, organize, read, draft)
-    - General questions and conversations
-    - Information and explanations
-    - Task planning and reminders
-    - Creative writing and brainstorming
-    
-    Keep responses conversational and helpful. If asked about email commands, mention: inbox, organize, read, draft."""
+    # Enhanced system prompt for Siri-like personality
+    system_prompt = """You are Luca, an intelligent AI voice assistant with a warm, helpful personality similar to Siri. Your characteristics:
+
+PERSONALITY:
+- Friendly, conversational, and approachable
+- Proactive and helpful without being intrusive
+- Use natural, spoken language (not formal writing)
+- Show personality with appropriate emojis and expressions
+- Be concise but not robotic
+
+CAPABILITIES:
+- Email management (inbox, organize, read, draft)
+- General questions and conversations
+- Information and explanations
+- Task planning and reminders
+- Creative writing and brainstorming
+- Weather, time, and general knowledge
+
+RESPONSE STYLE:
+- Start with acknowledgment when appropriate ("Sure!", "Of course!", "I'd be happy to help!")
+- Use contractions and natural speech patterns
+- Ask follow-up questions when helpful
+- Provide context and explanations when needed
+- End with helpful suggestions when relevant
+
+Keep responses conversational, warm, and helpful. Be like a knowledgeable friend who's always ready to assist."""
     
     # Format conversation history
     conversation_text = system_prompt + "\n\n"
@@ -91,8 +108,10 @@ def chat_with_ai(user_message: str, conversation_history: list = None) -> str:
     response = model.generate_content(
         conversation_text,
         generation_config=genai.types.GenerationConfig(
-            max_output_tokens=500,  # Keep responses concise for voice
-            temperature=0.7
+            max_output_tokens=300,  # Shorter for voice responses
+            temperature=0.8,  # More creative and natural
+            top_p=0.9,
+            top_k=40
         )
     )
     return response.text.strip()

@@ -15,7 +15,7 @@ import numpy as np
 from typing import Dict, List, Optional, Tuple
 from .config import VOSK_MODEL_PATH, ARABIC_MODEL_PATH, TUNISIAN_MODEL_PATH
 from .tts import speak
-from .ai_voice_processor import AIVoiceProcessor
+from .intent_library import detect_intent
 
 # Model configurations
 MODEL_CONFIGS = {
@@ -46,11 +46,12 @@ BYTES_PER_SAMPLE = 2
 CHANNELS = 1
 VAD_AGGRESSIVENESS = 2
 
-# Noise filtering settings - More sensitive for better recognition
-MIN_UTTERANCE_LENGTH = 1  # Lower threshold
-NOISE_THRESHOLD = 0.005   # More sensitive to quiet speech
-SILENCE_TIMEOUT = 5.0     # Longer timeout
-MIN_WAKE_LENGTH = 1       # Lower wake word threshold
+# Noise filtering settings - Optimized for Siri-like experience
+MIN_UTTERANCE_LENGTH = 2  # Minimum characters for valid command
+NOISE_THRESHOLD = 0.01    # Balanced sensitivity
+SILENCE_TIMEOUT = 1.5     # Faster response - wait for user to finish speaking
+MIN_WAKE_LENGTH = 2       # Minimum wake word length
+WAKE_WORD_CONFIDENCE = 0.7  # Confidence threshold for wake word detection
 
 class MultiLanguageVoiceRecognizer:
     """Multi-language voice recognition using multiple Vosk models."""
@@ -64,15 +65,6 @@ class MultiLanguageVoiceRecognizer:
         self.is_running = False
         self.microphone_index = None
         self.vad = None
-        self.ai_processor = None
-        
-        # Initialize AI voice processor
-        try:
-            self.ai_processor = AIVoiceProcessor()
-            print("🤖 AI Voice Processor initialized")
-        except Exception as e:
-            print(f"⚠️ AI Voice Processor not available: {e}")
-            self.ai_processor = None
         
         # Initialize VAD if available
         try:
@@ -206,43 +198,109 @@ class MultiLanguageVoiceRecognizer:
         config = MODEL_CONFIGS[self.current_language]
         text_lower = text.lower().strip()
         
-        # More flexible wake word detection
+        # Enhanced wake word detection with fuzzy matching
         for phrase in config['wake_phrases']:
             phrase_lower = phrase.lower()
-            if phrase_lower in text_lower or text_lower in phrase_lower:
+            
+            # Exact match
+            if phrase_lower in text_lower:
                 print(f"🔔 Wake word '{phrase}' detected in '{text_lower}'")
                 return True
+            
+            # Fuzzy match for common variations
+            if self._fuzzy_wake_match(text_lower, phrase_lower):
+                print(f"🔔 Wake word '{phrase}' detected (fuzzy) in '{text_lower}'")
+                return True
+                
+        return False
+    
+    def _fuzzy_wake_match(self, text: str, phrase: str) -> bool:
+        """Fuzzy matching for wake words to handle pronunciation variations."""
+        # Remove common filler words
+        text_clean = text.replace("um", "").replace("uh", "").replace("ah", "").strip()
+        
+        # Check if phrase words are present in order
+        phrase_words = phrase.split()
+        text_words = text_clean.split()
+        
+        if len(phrase_words) == 1:
+            # Single word - check if it's at the start or contains the word
+            return phrase_words[0] in text_clean
+        else:
+            # Multi-word phrase - check if all words are present in order
+            phrase_idx = 0
+            for word in text_words:
+                if phrase_idx < len(phrase_words) and phrase_words[phrase_idx] in word:
+                    phrase_idx += 1
+                    if phrase_idx == len(phrase_words):
+                        return True
         return False
     
     def _extract_command(self, text: str) -> Optional[str]:
-        """Extract command from text for current language using AI."""
+        """Extract command from text for current language."""
         config = MODEL_CONFIGS[self.current_language]
         text_lower = text.lower().strip()
         
-        # Remove wake words
+        # First, try to recognize intent from the full text (including wake words)
+        command_intent = self._recognize_intent(text, config)
+        if command_intent:
+            return command_intent
+        
+        # Remove wake words and try again
         for phrase in config['wake_phrases']:
             text_lower = text_lower.replace(phrase.lower(), '').strip()
         
-        # If AI processor is available, use it
-        if self.ai_processor and text_lower:
-            try:
-                result = self.ai_processor.process_voice_command(text_lower, self.current_language)
-                if result['confidence'] > 0.3:  # Minimum confidence threshold
-                    print(f"🤖 AI processed: '{text_lower}' → '{result['command']}' (confidence: {result['confidence']:.2f})")
-                    return result['command']
-                else:
-                    print(f"🤖 AI low confidence ({result['confidence']:.2f}): '{text_lower}'")
-            except Exception as e:
-                print(f"⚠️ AI processing failed: {e}")
+        # Enhanced command extraction with intent recognition
+        command_intent = self._recognize_intent(text_lower, config)
+        if command_intent:
+            return command_intent
         
-        # Fallback to keyword matching
+        # Check for direct command keywords
         for keyword in config['command_keywords']:
             if keyword.lower() in text_lower:
                 return keyword
         
-        # If no specific keyword found, return the cleaned text
+        # If no specific keyword found, check if it's a meaningful command
         if len(text_lower) >= MIN_UTTERANCE_LENGTH:
-            return text_lower
+            # Check if it contains question words or action words
+            question_words = ['what', 'how', 'when', 'where', 'why', 'who', 'which', 'can', 'could', 'would', 'should', 'will', 'do', 'does', 'did', 'is', 'are', 'was', 'were']
+            action_words = ['open', 'close', 'start', 'stop', 'play', 'show', 'tell', 'give', 'help', 'check', 'read', 'write', 'send', 'create', 'delete', 'find', 'search']
+            
+            if any(word in text_lower for word in question_words + action_words):
+                return text_lower
+            else:
+                return None
+        
+        # If only wake word detected, return a greeting
+        if any(phrase in text.lower() for phrase in config['wake_phrases']):
+            return "greeting"
+        
+        return None
+    
+    def _recognize_intent(self, text: str, config: dict) -> Optional[str]:
+        """Recognize user intent from natural language using comprehensive library."""
+        # Use the comprehensive intent library
+        intent_match = detect_intent(text, self.current_language)
+        if intent_match:
+            return intent_match.intent
+        
+        # Fallback to basic pattern matching for edge cases
+        text_lower = text.lower().strip()
+        
+        # Email-related intents (fallback)
+        if any(word in text_lower for word in ['email', 'mail', 'message', 'inbox', 'بريد', 'رسالة']):
+            if any(word in text_lower for word in ['read', 'show', 'check', 'اقرأ', 'أظهر']):
+                return 'email_inbox'
+            elif any(word in text_lower for word in ['organize', 'sort', 'arrange', 'تنظيم', 'ترتيب']):
+                return 'organize_emails'
+            elif any(word in text_lower for word in ['draft', 'write', 'compose', 'مسودة', 'اكتب']):
+                return 'email_compose'
+            elif any(word in text_lower for word in ['list', 'show', 'display', 'قائمة', 'أظهر']):
+                return 'email_inbox'
+        
+        # Question intents (fallback)
+        elif text_lower.startswith(('what', 'how', 'why', 'when', 'where', 'who', 'ماذا', 'كيف', 'لماذا', 'متى', 'أين', 'من')):
+            return 'question'
         
         return None
     
@@ -296,6 +354,7 @@ class MultiLanguageVoiceRecognizer:
                 start_time = time.time()
                 last_audio_time = start_time
                 utterance_buffer = ""
+                wake_word_detected = False
                 
                 while self.is_running and (time.time() - start_time) < timeout:
                     try:
@@ -315,23 +374,50 @@ class MultiLanguageVoiceRecognizer:
                             # Check for wake word
                             if self._detect_wake_word(utterance_buffer):
                                 print(f"🔔 Wake word detected: {utterance_buffer.strip()}")
+                                wake_word_detected = True
                                 
                                 # Extract command
                                 command = self._extract_command(utterance_buffer)
-                                if command:
+                                if command and len(command.strip()) > 2:  # Ensure we have a real command
                                     print(f"📝 Command: {command}")
                                     return command
                                 
-                                # Reset buffer after wake word
-                                utterance_buffer = ""
+                                # If just wake word, continue listening for more
+                                if wake_word_detected and len(utterance_buffer.strip()) < 10:
+                                    print("🔔 Wake word detected, waiting for command...")
+                                    # Continue listening for more input
+                                    continue
+                                
+                                # If wake word detected but no clear command, return the wake word
+                                if wake_word_detected and len(utterance_buffer.strip()) >= 10:
+                                    print(f"📝 Command: {utterance_buffer.strip()}")
+                                    return utterance_buffer.strip()
+                            
+                            # Don't process commands while still speaking - wait for silence
+                            # This will be handled in the silence timeout section
                         
-                        # Check for silence timeout
-                        if time.time() - last_audio_time > SILENCE_TIMEOUT:
+                        # Check for silence timeout after wake word
+                        if wake_word_detected and time.time() - last_audio_time > SILENCE_TIMEOUT:
                             if utterance_buffer.strip():
                                 print(f"⏰ Silence timeout, processing: {utterance_buffer.strip()}")
                                 command = self._extract_command(utterance_buffer)
                                 if command:
                                     return command
+                            utterance_buffer = ""
+                            wake_word_detected = False
+                        
+                        # Check for general silence timeout - process commands when user stops speaking
+                        elif not wake_word_detected and time.time() - last_audio_time > SILENCE_TIMEOUT:
+                            if utterance_buffer.strip():
+                                print(f"⏰ Silence timeout, processing: {utterance_buffer.strip()}")
+                                command = self._extract_command(utterance_buffer)
+                                if command and command not in ["greeting", "question"]:
+                                    print(f"📝 Command extracted: {command}")
+                                    return command
+                                else:
+                                    # If no clear command detected, return "don't understand"
+                                    print("❌ No clear command detected, returning dont_understand")
+                                    return "dont_understand"
                             utterance_buffer = ""
                     
                     except queue.Empty:

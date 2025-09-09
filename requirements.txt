@@ -11,3 +11,7 @@ sounddevice==0.4.7
 numpy>=1.21.0
 webrtcvad==2.0.10
 httpx==0.24.1
+# Additional dependencies for enhanced voice features
+# Note: PyAudio requires PortAudio headers on Windows
+# Alternative: Use sounddevice (already included) for audio input
+speechrecognition==3.10.0

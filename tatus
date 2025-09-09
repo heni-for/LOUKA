@@ -1,0 +1,31 @@
+[33mcommit 1e6d32b02e93a0e36ef4fe09d10dbf3010772c4e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: heni-for <nheni0777@gmail.com>
+Date:   Mon Sep 8 22:30:49 2025 +0100
+
+    Add AI voice processor and multilingual voice support with Gmail integration
+
+.env.new
+.gitignore
+assistant/ai_voice_processor.py
+assistant/config.py
+assistant/email_integration.py
+assistant/gmail_api.py
+assistant/gui.py
+assistant/language_switcher.py
+assistant/multilang_voice.py
+assistant/simple_voice_test.py
+assistant/tts.py
+assistant/tts_arabic.py
+assistant/tts_simple.py
+check_voices.py
+download_tunisian_model.py
+install_arabic_voices.py
+setup_gmail_api.py
+setup_multilang_models.py
+simple_gmail_test.py
+test_ai_voice.py
+test_gmail_connection.py
+test_microphone.py
+test_multilang_voice.py
+test_simple_voice.py
+test_tts.py

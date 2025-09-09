@@ -19,6 +19,7 @@ from rich import print
 from .tts import speak
 from .cli import inbox as cmd_inbox, read_message as cmd_read, organize as cmd_organize, draft as cmd_draft
 from .llm import chat_with_ai
+from .smart_features import handle_smart_command, is_smart_command
 from .config import VOSK_MODEL_PATH
 
 WAKE_PHRASES = ["luca", "hey luca", "ok luca", "okay luca", "hi luca"]
@@ -261,6 +262,14 @@ def parse_command(text: str) -> None:
 		return
 	print(f"Heard: {low}")
 	
+	# Check for smart commands first
+	smart_intent = is_smart_command(text)
+	if smart_intent:
+		say("Sure! Let me help you with that.")
+		response = handle_smart_command(smart_intent, text)
+		say(response)
+		return
+	
 	# Email-specific commands
 	if low.startswith("read"):
 		say("Say read then the message ID from the inbox list.")
@@ -282,7 +291,7 @@ def parse_command(text: str) -> None:
 		else:
 			say("I did not catch the prompt.")
 	elif low.startswith("help"):
-		say("I can help with email commands: inbox, organize, read, draft. Or just ask me anything!")
+		say("I can help with email commands: inbox, organize, read, draft. I can also tell you the time, weather, jokes, and answer questions! Just ask me anything!")
 	elif low.startswith("clear") or low.startswith("reset"):
 		conversation_history = []
 		say("Conversation history cleared.")

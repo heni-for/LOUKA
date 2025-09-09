@@ -16,6 +16,9 @@ from .config import VOSK_MODEL_PATH
 from .email_integration import EmailIntegration
 from .multilang_voice import MultiLanguageVoiceRecognizer
 from .language_switcher import LanguageSwitcher
+from .llm import chat_with_ai
+from .smart_features import handle_smart_command, is_smart_command
+from .intent_library import detect_intent
 
 
 class LucaGUI:
@@ -116,6 +119,13 @@ class LucaGUI:
         """Process voice command from push-to-talk."""
         # Add user message with what was heard
         self.add_message("user", f"🎤 Heard: '{command}'")
+        
+        # Check if it's just a wake word without command
+        if command.lower().strip() in ["luca", "hey luca", "ok luca", "لوكا", "مرحبا لوكا", "greeting"]:
+            self.add_message("assistant", "Yes? How can I help you?")
+            # Reset PTT status
+            self.ptt_status_label.config(text="🎤 Press and hold 'L' to talk", fg='#95a5a6')
+            return
         
         # Check for "read my last email" command
         if any(phrase in command.lower() for phrase in [
@@ -384,14 +394,17 @@ class LucaGUI:
         """Main listening loop."""
         try:
             while self.is_listening and self.rec:
-                utterance = self.rec.listen_text(mode="free")
+                # Use the new voice recognition system
+                utterance = self.rec.listen_for_command()
                 if utterance and len(utterance.strip()) > 1:
+                    print(f"🎤 GUI received command: {utterance}")
                     # Process the voice input
-                    self.root.after(0, lambda u=utterance: self.add_message("user", u))
+                    self.root.after(0, lambda u=utterance: self.add_message("user", f"🎤 Heard: '{u}'"))
                     self.root.after(0, lambda u=utterance: self.process_command(u))
                     break  # Stop listening after getting input
         except Exception as e:
             error_msg = str(e)
+            print(f"❌ GUI Error: {error_msg}")
             self.root.after(0, lambda: self.add_message("error", error_msg))
         finally:
             self.root.after(0, self.stop_listening)
@@ -399,6 +412,8 @@ class LucaGUI:
     def process_command(self, command: str):
         """Process a voice or text command."""
         try:
+            print(f"🔍 Processing command: '{command}'")
+            
             # Check if it's an email command first
             if command.lower().strip() in ["inbox", "organize", "organise", "read", "draft", "help"]:
                 self.handle_email_command(command.lower().strip())
@@ -436,9 +451,18 @@ class LucaGUI:
                 self.add_message("assistant", summary_result)
                 return
             
+            # Check for smart commands first using comprehensive intent library
+            smart_intent = is_smart_command(command, self.language_switcher.get_current_language())
+            print(f"🧠 Smart intent detected: {smart_intent}")
+            if smart_intent:
+                self.add_message("assistant", "Sure! Let me help you with that.")
+                response = handle_smart_command(smart_intent, command)
+                print(f"💬 Smart response: {response}")
+                self.add_message("assistant", response)
+                return
+            
             # Try AI chat for other commands
             try:
-                from .llm import chat_with_ai
                 response = chat_with_ai(command, self.conversation_history)
                 self.add_message("assistant", response)
                 

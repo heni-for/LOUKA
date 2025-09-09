@@ -6,24 +6,33 @@ def _get_engine():
     global _engine
     if _engine is None:
         _engine = pyttsx3.init()
-        _engine.setProperty('rate', 200)  # Natural speech rate
-        _engine.setProperty('volume', 1.0)
-        # Try to choose a Tunisian Arabic voice if present
+        _engine.setProperty('rate', 200)  # Faster rate for quicker responses
+        _engine.setProperty('volume', 0.9)  # Slightly lower volume for comfort
+        # Try to choose a high-quality voice
         try:
             voices = _engine.getProperty('voices')
             preferred = None
-            for v in voices:
-                name = (getattr(v, 'name', '') or '').lower()
-                # Look for Arabic voices first
-                if any(keyword in name for keyword in ['arabic', 'tunisian', 'tunisia', 'ar-', 'ar_']):
-                    preferred = v.id
+            
+            # Voice preference order (best to worst)
+            voice_preferences = [
+                'zira', 'david', 'aria', 'hazel', 'susan', 'mark', 'richard',
+                'arabic', 'tunisian', 'tunisia', 'ar-', 'ar_'
+            ]
+            
+            for preference in voice_preferences:
+                for v in voices:
+                    name = (getattr(v, 'name', '') or '').lower()
+                    if preference in name:
+                        preferred = v.id
+                        break
+                if preferred:
                     break
-                # Fallback to common voices
-                elif 'zira' in name or 'david' in name or 'aria' in name:
-                    preferred = v.id
+            
             if preferred:
                 _engine.setProperty('voice', preferred)
                 print(f"Using voice: {preferred}")
+            else:
+                print("Using default voice")
         except Exception as e:
             print(f"Voice selection error: {e}")
     return _engine
