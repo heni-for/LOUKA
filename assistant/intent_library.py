@@ -120,7 +120,8 @@ class IntentLibrary:
                 'en': [
                     'check email', 'read email', 'open email', 'show email', 'email inbox',
                     'new email', 'unread email', 'email messages', 'check mail', 'open mail',
-                    'read my email', 'check my email', 'show my email', 'email notifications'
+                    'check my email', 'show my email', 'email notifications', 'list emails',
+                    'show all emails', 'check inbox', 'email list'
                 ],
                 'ar': [
                     'تحقق من البريد', 'اقرأ البريد', 'افتح البريد', 'أظهر البريد', 'صندوق البريد',
@@ -149,6 +150,53 @@ class IntentLibrary:
                     'اكتب بريد', 'أرسل بريد', 'مسودة بريد', 'إنشاء بريد', 'بريد جديد',
                     'أرسل بريد', 'راسل شخص', 'اكتب رسالة', 'إنشاء رسالة',
                     'مسودة رسالة', 'إنشاء رسالة', 'أرسل رسالة'
+                ]
+            },
+            
+            'email_summary_and_respond': {
+                'en': [
+                    'summarize my last email', 'summary of last email', 'summarize last email',
+                    'read my last email and respond', 'summarize and respond to last email',
+                    'auto respond to last email', 'generate response for last email',
+                    'summarize last email and send response', 'read last email and reply',
+                    'analyze last email and respond', 'process last email and respond',
+                    'read my last email', 'check my last email', 'show my last email',
+                    'what is my last email', 'tell me about my last email',
+                    'read email from', 'check email from', 'show email from',
+                    'read last email from', 'check last email from', 'show last email from',
+                    'email from', 'last email from', 'read from'
+                ],
+                'ar': [
+                    'لخص آخر بريد', 'ملخص آخر بريد', 'لخص آخر رسالة',
+                    'اقرأ آخر بريدي ورد', 'لخص ورد على آخر بريد',
+                    'رد تلقائي على آخر بريد', 'أنشئ رد على آخر بريد',
+                    'لخص آخر بريد وأرسل رد', 'اقرأ آخر بريد ورد',
+                    'حلل آخر بريد ورد', 'عالج آخر بريد ورد'
+                ],
+                'tn': [
+                    'لخص آخر بريد', 'ملخص آخر بريد', 'لخص آخر رسالة',
+                    'اقرا آخر بريدي ورد', 'لخص ورد على آخر بريد',
+                    'رد تلقائي على آخر بريد', 'اعمل رد على آخر بريد',
+                    'لخص آخر بريد وابعث رد', 'اقرا آخر بريد ورد',
+                    'حلل آخر بريد ورد', 'عالج آخر بريد ورد'
+                ]
+            },
+            
+            'email_summary_only': {
+                'en': [
+                    'summarize my email', 'email summary', 'brief email summary',
+                    'quick email summary', 'short email summary', 'email overview',
+                    'summarize email', 'email brief', 'email digest'
+                ],
+                'ar': [
+                    'لخص بريدي', 'ملخص البريد', 'ملخص سريع للبريد',
+                    'ملخص مختصر للبريد', 'نظرة عامة على البريد',
+                    'ملخص البريد', 'نبذة عن البريد', 'ملخص البريد'
+                ],
+                'tn': [
+                    'لخص بريدي', 'ملخص البريد', 'ملخص سريع للبريد',
+                    'ملخص مختصر للبريد', 'نظرة عامة على البريد',
+                    'ملخص البريد', 'نبذة عن البريد', 'ملخص البريد'
                 ]
             },
             

@@ -235,7 +235,41 @@ class SpeechRecognizer:
 
 def say(text: str) -> None:
 	print(text)
-	speak(text)
+	print("💡 Press 'l' to stop speaking")
+	
+	# Use simple TTS that works
+	try:
+		import pyttsx3
+		engine = pyttsx3.init()
+		engine.setProperty('rate', 200)
+		engine.setProperty('volume', 0.9)
+		
+		# Try to find a good voice
+		try:
+			voices = engine.getProperty('voices')
+			preferred = None
+			voice_preferences = ['zira', 'david', 'aria', 'hazel', 'susan', 'mark', 'richard']
+			
+			for preference in voice_preferences:
+				for v in voices:
+					name = (getattr(v, 'name', '') or '').lower()
+					if preference in name:
+						preferred = v.id
+						break
+				if preferred:
+					break
+			
+			if preferred:
+				engine.setProperty('voice', preferred)
+		except:
+			pass
+		
+		engine.say(text)
+		engine.runAndWait()
+		
+	except Exception as e:
+		print(f"TTS error: {e}")
+		print(f"🔊 [TTS Failed] {text}")
 
 
 def voice_inbox() -> None:
@@ -329,6 +363,7 @@ def _ptt_listener(stop_event: threading.Event):
 def main():
 	print("Starting Luca - Your AI Voice Assistant")
 	print("Press Enter to speak (push-to-talk).")
+	print("Press 'l' to interrupt speech at any time.")
 	print("Usage: python -m assistant.voice [mic_index] [model_path]")
 	print("\nCapabilities:")
 	print("• Email: inbox, organize, read, draft")

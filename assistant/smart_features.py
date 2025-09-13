@@ -189,11 +189,209 @@ def handle_smart_command(intent: str, user_input: str = "") -> str:
     
     # Email intents
     elif intent == "email_inbox":
-        return "I'll check your email inbox for you. Let me connect to your email account..."
+        try:
+            # Try Gmail first
+            from .gmail_simple import list_gmail_inbox
+            messages = list_gmail_inbox(top=5)
+            
+            if not messages:
+                # Try Outlook as fallback
+                try:
+                    from .outlook_local import list_inbox
+                    messages = list_inbox(top=5)
+                except:
+                    pass
+            
+            if not messages:
+                return "Your inbox is empty. No new emails!"
+            
+            # Format the response
+            response = "Here are your recent emails:\n"
+            for i, msg in enumerate(messages, 1):
+                status = "📧" if msg.get("unread", False) else "📬"
+                response += f"{i}. {status} {msg.get('subject', 'No subject')} from {msg.get('sender', 'Unknown')}\n"
+            
+            return response
+        except Exception as e:
+            return f"Sorry, I couldn't access your email. Make sure Gmail is set up or Outlook is running. Error: {str(e)}"
+    
+    elif intent == "email_summary_and_respond":
+        try:
+            from .gmail_simple import get_last_email_with_content, get_last_email_from_sender, send_gmail_message
+            
+            # Check if user specified a sender
+            sender_name = None
+            user_input_lower = user_input.lower()
+            
+            # Look for "from [name]" patterns
+            if 'from' in user_input_lower:
+                # Extract sender name after "from"
+                parts = user_input_lower.split('from')
+                if len(parts) > 1:
+                    sender_name = parts[1].strip()
+                    # Clean up common words
+                    sender_name = sender_name.replace('mohammad', 'mohamed').replace('ferretti', 'fourati')
+            
+            # Get email based on whether sender was specified
+            if sender_name:
+                last_email = get_last_email_from_sender(sender_name)
+                if not last_email:
+                    return f"No emails found from {sender_name}."
+            else:
+                last_email = get_last_email_with_content()
+                if not last_email:
+                    return "No emails found in your inbox."
+            
+            # Extract email details
+            subject = last_email.get('subject', 'No subject')
+            sender = last_email.get('sender', 'Unknown')
+            body = last_email.get('body', 'No content')
+            
+            # Create brief summary
+            summary = f"📧 Email Summary:\n"
+            summary += f"From: {sender}\n"
+            summary += f"Subject: {subject}\n"
+            
+            # Create a smart summary of the content
+            if len(body) > 50:
+                # Extract first sentence or key points
+                sentences = body.split('.')
+                if len(sentences) > 0:
+                    first_sentence = sentences[0].strip()
+                    if len(first_sentence) > 100:
+                        summary += f"Summary: {first_sentence[:100]}...\n"
+                    else:
+                        summary += f"Summary: {first_sentence}\n"
+                else:
+                    summary += f"Summary: {body[:100]}...\n"
+            else:
+                summary += f"Summary: {body}\n"
+            
+            # Generate response using AI
+            try:
+                from .llm import chat_with_ai
+                
+                prompt = f"""Based on this email, generate a professional response:
+
+From: {sender}
+Subject: {subject}
+Content: {body}
+
+Generate a polite, professional response that:
+1. Acknowledges the email
+2. Addresses any questions or requests
+3. Is concise but complete
+4. Maintains professional tone
+
+Response:"""
+                
+                ai_response = chat_with_ai(prompt, [])
+                
+                # Extract sender email from the "From" field
+                sender_email = sender
+                if '<' in sender and '>' in sender:
+                    sender_email = sender.split('<')[1].split('>')[0]
+                elif '@' in sender:
+                    sender_email = sender
+                else:
+                    sender_email = f"{sender}@example.com"  # Fallback
+                
+                # Send the response
+                response_subject = f"Re: {subject}" if not subject.startswith('Re:') else subject
+                success = send_gmail_message(sender_email, response_subject, ai_response)
+                
+                if success:
+                    summary += f"\n✅ Auto-response sent successfully!\n"
+                    summary += f"📤 Response: {ai_response[:100]}..." if len(ai_response) > 100 else f"📤 Response: {ai_response}"
+                else:
+                    summary += f"\n❌ Failed to send auto-response.\n"
+                    summary += f"📝 Generated response: {ai_response[:100]}..." if len(ai_response) > 100 else f"📝 Generated response: {ai_response}"
+                
+            except Exception as ai_error:
+                # Fallback response when AI fails
+                summary += f"\n⚠️ AI response generation failed: {ai_error}"
+                
+                # Generate a simple fallback response
+                if 'linkedin' in sender.lower() or 'noreply' in sender.lower():
+                    fallback_response = "Thank you for the notification. I'll review this information."
+                elif 'google' in sender.lower():
+                    fallback_response = "Thank you for the security alert. I'll take appropriate action."
+                else:
+                    fallback_response = "Thank you for your email. I'll review this and get back to you soon."
+                
+                summary += f"\n📝 Suggested response: {fallback_response}"
+                summary += f"\n💡 Note: This appears to be an automated notification. You may not need to respond."
+            
+            return summary
+            
+        except Exception as e:
+            return f"Sorry, I couldn't process your last email. Error: {str(e)}"
+    
+    elif intent == "email_summary_only":
+        try:
+            from .gmail_simple import get_last_email_with_content, get_last_email_from_sender
+            
+            # Check if user specified a sender
+            sender_name = None
+            user_input_lower = user_input.lower()
+            
+            # Look for "from [name]" patterns
+            if 'from' in user_input_lower:
+                parts = user_input_lower.split('from')
+                if len(parts) > 1:
+                    sender_name = parts[1].strip()
+                    sender_name = sender_name.replace('mohammad', 'mohamed').replace('ferretti', 'fourati')
+            
+            # Get email based on whether sender was specified
+            if sender_name:
+                last_email = get_last_email_from_sender(sender_name)
+                if not last_email:
+                    return f"No emails found from {sender_name}."
+            else:
+                last_email = get_last_email_with_content()
+                if not last_email:
+                    return "No emails found in your inbox."
+            
+            # Extract email details
+            subject = last_email.get('subject', 'No subject')
+            sender = last_email.get('sender', 'Unknown')
+            body = last_email.get('body', 'No content')
+            
+            # Create brief summary only
+            summary = f"📧 Email Summary:\n"
+            summary += f"From: {sender}\n"
+            summary += f"Subject: {subject}\n"
+            
+            # Smart summary of content
+            if len(body) > 50:
+                sentences = body.split('.')
+                if len(sentences) > 0:
+                    first_sentence = sentences[0].strip()
+                    if len(first_sentence) > 80:
+                        summary += f"Summary: {first_sentence[:80]}...\n"
+                    else:
+                        summary += f"Summary: {first_sentence}\n"
+                else:
+                    summary += f"Summary: {body[:80]}...\n"
+            else:
+                summary += f"Summary: {body}\n"
+            
+            return summary
+            
+        except Exception as e:
+            return f"Sorry, I couldn't summarize your email. Error: {str(e)}"
+    
     elif intent == "email_compose":
         return "I'll help you compose an email. What would you like to write about?"
+    
     elif intent == "gmail":
-        return "I'll open Gmail for you. Let me access your Gmail account..."
+        try:
+            # Try to open Gmail in browser
+            import webbrowser
+            webbrowser.open("https://gmail.com")
+            return "Opening Gmail in your browser..."
+        except Exception as e:
+            return f"Sorry, I couldn't open Gmail. Error: {str(e)}"
     
     # Calculator intents
     elif intent == "calculate":

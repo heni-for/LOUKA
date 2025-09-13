@@ -63,3 +63,20 @@ def speak(text: str) -> None:
 	except Exception as e:
 		print(f"Default TTS failed: {e}")
 		print("❌ All TTS methods failed - text will not be spoken")
+
+def stop_speaking():
+	"""Stop current speech. Press 'l' key to interrupt."""
+	try:
+		from .tts_interruptible import stop_speaking as interruptible_stop
+		interruptible_stop()
+	except Exception as e:
+		print(f"Stop speech failed: {e}")
+
+def is_speaking():
+	"""Check if currently speaking."""
+	try:
+		from .tts_interruptible import is_speaking as interruptible_speaking
+		return interruptible_speaking()
+	except Exception as e:
+		print(f"Check speaking status failed: {e}")
+		return False

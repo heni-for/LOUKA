@@ -28,6 +28,7 @@ class ContinuousVoiceAssistant:
         """Start the continuous voice assistant."""
         self.is_running = True
         print("🎤 Luca is now active! Say 'Hey Luca' to wake me up.")
+        print("💡 Press 'l' to interrupt speech at any time")
         speak("Hello! I'm Luca, your AI assistant. Say 'Hey Luca' to start talking to me.")
         
         # Start the main listening loop
