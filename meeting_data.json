@@ -1,0 +1,91 @@
+{
+  "meeting_history": [
+    {
+      "meeting_id": "test_meeting_001",
+      "title": "اجتماع فريق العمل",
+      "participants": [
+        {
+          "name": "أحمد",
+          "role": "participant",
+          "sentiment": "neutral",
+          "participation_level": "low",
+          "key_points": [
+            "أهلا جميعاً، شنو نعمل اليوم؟"
+          ]
+        },
+        {
+          "name": "فاطمة",
+          "role": "participant",
+          "sentiment": "positive",
+          "participation_level": "low",
+          "key_points": [
+            "نعمل مشروع جديد، مهم جداً"
+          ]
+        },
+        {
+          "name": "محمد",
+          "role": "participant",
+          "sentiment": "neutral",
+          "participation_level": "low",
+          "key_points": []
+        }
+      ],
+      "action_items": [
+        {
+          "id": "action_1757856885_0",
+          "description": "اليوم؟",
+          "assignee": "أحمد",
+          "due_date": null,
+          "priority": "medium",
+          "status": "pending",
+          "created_at": 1757856885.2336617
+        },
+        {
+          "id": "action_1757856886_0",
+          "description": "مشروع جديد، مهم جداً",
+          "assignee": "فاطمة",
+          "due_date": null,
+          "priority": "medium",
+          "status": "pending",
+          "created_at": 1757856886.282986
+        },
+        {
+          "id": "action_1757856887_0",
+          "description": "خطة العمل",
+          "assignee": "محمد",
+          "due_date": null,
+          "priority": "medium",
+          "status": "pending",
+          "created_at": 1757856887.1228404
+        },
+        {
+          "id": "action_1757856888_0",
+          "description": "جدول زمني",
+          "assignee": "أحمد",
+          "due_date": null,
+          "priority": "medium",
+          "status": "pending",
+          "created_at": 1757856888.0302677
+        },
+        {
+          "id": "action_1757856888_0",
+          "description": "تقرير أسبوعي",
+          "assignee": "فاطمة",
+          "due_date": null,
+          "priority": "medium",
+          "status": "pending",
+          "created_at": 1757856888.7267501
+        }
+      ],
+      "key_decisions": [
+        "جداً",
+        "جديد، مهم جداً"
+      ],
+      "overall_sentiment": "neutral",
+      "duration": 0,
+      "summary": "## ملخص اجتماع الفريق\n\n**المواضيع الرئيسية:**  ناقش الاجتماع مشروعًا جديدًا ذا أهمية بالغة، وخطوات إنجازه.\n\n**القرارات الرئيسية:**  اتفق الفريق على تطوير خطة عمل، وجدول زمني، وتقرير أسبوعي لتتبع تقدم المشروع.\n\n**مهام العمل:**  يتعين على الفريق وضع خطة عمل متكاملة، بالإضافة لجدول زمني محدد، وإعداد تقرير أسبوعي عن سير العمل.\n\n**النتيجة النهائية:**  تم تحديد الخطوات اللازمة لبدء العمل على المشروع الجديد وتوزيع المهام.",
+      "created_at": 1757856890.345224
+    }
+  ],
+  "action_items": [
+    
